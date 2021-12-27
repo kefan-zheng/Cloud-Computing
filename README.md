@@ -48,7 +48,8 @@
 
 ### 系统组成
 
-+ 4台CentOS Linux release 7.9.2009 (Core)虚拟机
++ 4台CentOS Linux release 7.9.2009 (Core)虚拟机，主机名分别为Master、Slave1、Slave2和Slave3。
++ Master和Slave1部署在Windows 11操作系统上，Slave2和Slave3部署在MacOS操作系统上，组成了一个分布式的云系统。
 
 |       Master       |     Slave1     |     Slave2     |     Slave3     |
 | :----------------: | :------------: | :------------: | :------------: |
@@ -63,8 +64,7 @@
 + 软件版本
   + hadoop 2.10.1
   + java-1.8.0-openjdk-devel.x86_64
-  + hive ❌❌❌
-  + 
+  + hive 2.3.9
 
 ### hadoop架构
 
@@ -80,8 +80,6 @@
 ![Dpz74XZ](%E9%A1%B9%E7%9B%AE%E6%8A%A5%E5%91%8A.assets/Dpz74XZ.jpg)
 
 ### 文件管理方法
-
-
 
 #### HDFS
 
@@ -154,11 +152,7 @@ SecondaryNameNode工作过程：
 
 + ❌❌❌❌❌
 
-
-
 ### 计算任务分配机制
-
-
 
 #### Mapreduce作业运行过程
 
@@ -181,16 +175,34 @@ SecondaryNameNode工作过程：
    + 同时JobClient通过每秒查询JobTracker来获得最新状态，并且输出到控制台上
 7. 作业完成：当JobTracker收到作业最后一个任务已完成的通知后，便把作业的状态设置为"成功"
 
-
-
 ### 实现过程
 
 #### 搭建尝试
 
-+ 在项目初期，打算通过Docker在服务器配置hadoop环境，实现四台服务器上的完全分布式集群，在完成基本配置后，启动hadoop或者运行mapreduce
++ 在项目初期，打算通过Docker在服务器配置hadoop环境，实现四台服务器上多节点的完全分布式集群。在完成基本配置后，启动hadoop或者运行mapreduce时，经常会出现服务器由于内存不足而宕机卡住的情况出现，导致不得不重启服务器和hadoop集群，但重启之后依然会出现上述情况。于是考虑通过开启虚拟内存的方式增加内存资源进行尝试，但依然无法解决机器宕机的情况，无法稳定进行测试和运算。参考的教程如下：[服务器开启虚拟内存。](https://blog.csdn.net/qq_35500685/article/details/92787168?utm_medium=distribute.pc_aggpage_search_result.none-task-blog-2~aggregatepage~first_rank_ecpm_v1~rank_v31_ecpm-4-92787168.pc_agg_new_rank&utm_term=%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%A6%82%E4%BD%95%E6%89%93%E5%BC%80%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98&spm=1000.2123.3001.4430)
+
++ 以下是在服务器上只搭建了一个DataNode的情况，分别通过`hdfs dfsadmin -report`命令查看hadoop当前hadoop的运行状况，以及`free -m`命令查看服务器的资源占用情况，可以发现只启动了一个节点的情况下，服务器的内存资源就已经消耗殆尽，依靠虚拟内存才勉强维持运行，且使用的虚拟内存容量远大于剩余的物理内存容量。
+
+  ![服务器hadoop情况](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\服务器hadoop情况.png)
+
+  ![服务器内存占用情况](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\服务器内存占用情况.png)
 
 #### 实际搭建
 
+- 由于上述性能原因，我们放弃了在服务器上搭建hadoop集群的想法，选择在各自的笔记本电脑虚拟机软件上实现分布式的系统。使用的虚拟软件有VMware Fusion以及VMware Workstation 15 Pro。
+
++ 总体系统由4台CentOS Linux release 7.9.2009 (Core)虚拟机组成，主机名分别为Master、Slave1、Slave2和Slave3。Master和Slave1部署在Windows 11操作系统上，Slave2和Slave3部署在MacOS操作系统上。
+
+|       Master       |     Slave1     |     Slave2     |     Slave3     |
+| :----------------: | :------------: | :------------: | :------------: |
+| IP：192.168.43.220 | 192.168.43.221 | 192.168.43.222 | 192.168.43.223 |
+|      NameNode      |     —————      |     —————      |     —————      |
+|       —————        |    DataNode    |    DataNode    |    DataNode    |
+
+搭建方法参考老师提供的资料以及一些[网络资源。](http://dblab.xmu.edu.cn/blog/2775-2/#more-2775)
+
 #### 程序编码
 
-#### 测试
+使用
+
+#### 测试优化
