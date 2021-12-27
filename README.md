@@ -270,8 +270,38 @@ SecondaryNameNode工作过程：
 
   + 计算任务二
 
+    ```java
+    // 使用通话类型加运营商类别作为key 使用硬编码值1作为value
+    context.write(new Text(call_type + calling_optr), new IntWritable(1));
+    context.write(new Text(call_type + calling_optr), new IntWritable(1));
+    ```
+  
+    因为有打电话和接电话的区别，所以在Map这一步的时候，将call_type + calling_optr和call_type + calling_optr同时作为key，所以一共有9种key的类别，计算的结果如下：
+  
+    ```c++
+    11	2485801	//市话+电信
+    12	953128	//市话+移动
+    13	136945	//市话+联通
+    21	217084	//长途+电信
+    22	102751	//长途+移动
+    23	20677		//长途+联通
+    31	44203		//漫游+电信
+    32	26168		//漫游+移动
+    33	5219		//漫游+联通
+    ```
+  
+    <img src="readme-pic/pie-borderRadius1.png" alt="pie-borderRadius1.png" style="zoom:50%;" />
     
-
+    <img src="readme-pic/pie-borderRadius2.png" alt="pie-borderRadius2.png" style="zoom:50%;" />
+    
+    <img src="readme-pic/pie-borderRadius3.png" alt="pie-borderRadius3.png" style="zoom: 50%;" />
+  
+    
+  
+    
+  
+    
+  
   + 计算任务三
 
 #### 测试优化
