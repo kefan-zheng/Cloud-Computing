@@ -10,16 +10,35 @@
 
 ## 目录
 
-+ ### [系统架构](#系统架构)
++ ### [1 系统架构](#系统架构)
 
-+ ### [文件管理方法](#文件管理方法)
+  + #### [1.1 系统组成](##系统组成)
 
-+ ###  [计算任务分配机制]()
+  + #### [1.2 hadoop架构介绍](##hadoop架构)
 
-+ ### [实现过程]()
++ ### [2 文件管理方法](#文件管理方法)
 
+  + #### [2.1 HDFS介绍](##HDFS)
 
+  + #### [2.2 文件分块方法](##文件分块方法)
 
+  + #### [ 2.3 文件备份方法](##文件备份方法)
+
+  + #### [2.4文件一致性方法](##文件一致性方法)
+
++ ###  [3 计算任务分配机制](#计算任务分配机制)
+
+  + #### [3.1 MapReduce](#MapReduce)
+
++ ### [4 实现过程](#实现过程)
+
+  + #### [4.1 搭建尝试](#搭建尝试)
+
+  + #### [4.2 实际搭建](#实际搭建)
+
+  + #### [4.3 程序编码](#程序编码)
+
+  + #### [4.4 测试优化](#测试优化)
 
 
 
@@ -49,7 +68,7 @@
 ### 系统组成
 
 + 4台CentOS Linux release 7.9.2009 (Core)虚拟机，主机名分别为Master、Slave1、Slave2和Slave3。
-+ Master和Slave1部署在Windows 11操作系统上，Slave2和Slave3部署在MacOS操作系统上，组成了一个分布式的云系统。
++ Master和Slave1部署在Windows 11操作系统上，Slave2和Slave3部署在MacOS操作系统上，组成了一个分布式的云计算系统。
 
 |       Master       |     Slave1     |     Slave2     |     Slave3     |
 | :----------------: | :------------: | :------------: | :------------: |
@@ -65,6 +84,7 @@
   + hadoop 2.10.1
   + java-1.8.0-openjdk-devel.x86_64
   + hive 2.3.9
+  + CentOS Linux release 7.9.2009
 
 ### hadoop架构
 
@@ -77,9 +97,9 @@
 
 #### 基本组成部分
 
-![Dpz74XZ](%E9%A1%B9%E7%9B%AE%E6%8A%A5%E5%91%8A.assets/Dpz74XZ.jpg)
+![Dpz74XZ](readme-pic/Dpz74XZ.jpg)
 
-### 文件管理方法
+## 文件管理方法
 
 #### HDFS
 
@@ -102,7 +122,7 @@ HDFS是一个分布式的文件存储系统，它起源于Apache Nutch项目
 - 负责提供来自文件系统客户端的读取和写入请求。
 - 根据来自NameNode的指令，执行数据块创建，删除和复制操作。
 
-![v2-a5fe82bfe8c0987a02eadee658e9216c_1440w](%E9%A1%B9%E7%9B%AE%E6%8A%A5%E5%91%8A.assets/v2-a5fe82bfe8c0987a02eadee658e9216c_1440w.png)
+![v2-a5fe82bfe8c0987a02eadee658e9216c_1440w](readme-pic/v2-a5fe82bfe8c0987a02eadee658e9216c_1440w.png)
 
 #### 文件分块方法
 
@@ -152,40 +172,40 @@ SecondaryNameNode工作过程：
 
 + ❌❌❌❌❌
 
-### 计算任务分配机制
+## 计算任务分配机制
 
-#### Mapreduce作业运行过程
+#### MapReduce
 
 1. JobTracker接收到Job对象对其submitJob()方法的调用后，就会把这个调用放入一个内部队列中，交由作业调度器(Job Scheduler)进行调度,并对其进行初始化。
-2. 初始化工作：创建一个表示正在运行作业的对象(它封装任务和记录信息，以便跟踪任务的状态和进程)
-3. 创建任务运行列表，包括map和reduce任务，创建任务过程分析
+2. **初始化工作**：创建一个表示正在运行作业的对象(它封装任务和记录信息，以便跟踪任务的状态和进程)
+3. **创建任务运行列表**，包括map和reduce任务，创建任务过程分析
    + 作业调度器从HDFS中获取JobClient已计算好的输入分片信息，然后为每个分片创建一个map任务，并且创建Reduce任务
    + 除了map和reduce任务，还有setupJob和cleanupJob需要建立
-4. 任务分配
+4. **任务分配**
    + TaskTracker定期通过“心跳”与JobTracker进行通信，主要是告知JobTracker自身是否还存活，以及是否已经准备好运行新的任务等
    + JobTracker在为TaskTracker选择任务之前，必须先通过作业调度器选定任务所在的作业
    + 每个TaskTracker都有固定数量的map和reduce任务槽，数量取决于TaskTracker节点的CPU内核数量和内存大小
    + JobTracker分配map任务时会选取与输入分片最近的TaskTracker(任务本地化)。
-5. 任务执行
+5. **任务执行**
    + TaskTracker分配到一个任务后，通过从HDFS把作业的Jar文件复制到TaskTracker所在的文件系统（Jar本地化用来启动JVM），同时TaskTracker将应用程序所需要的全部文件从分布式缓存复制到本地磁盘
    + TaskTracker为任务新建一个本地工作目录，并把Jar文件中的内容解压到这个文件夹中
    + TaskTracker新建一个TaskRunner实例来启动一个新的JVM来运行每个Task(包括MapTask和ReduceTask)。子进程通过umbilical接口与父进程进行通信，Task的子进程每隔几秒便告知父进程它的进度，直到任务完成
-6. 进度和状态更新过程
+6. **进度和状态更新过程**
    + Child JVM有独立的线程，每隔3秒检查一次任务更新标志，如有更新则报告给 TaskTracker,TaskTracker每隔5秒给JobTracker发一次心跳信息
    + 同时JobClient通过每秒查询JobTracker来获得最新状态，并且输出到控制台上
-7. 作业完成：当JobTracker收到作业最后一个任务已完成的通知后，便把作业的状态设置为"成功"
+7. **作业完成**：当JobTracker收到作业最后一个任务已完成的通知后，便把作业的状态设置为"成功"
 
-### 实现过程
+## 实现过程
 
 #### 搭建尝试
 
-+ 在项目初期，打算通过Docker在服务器配置hadoop环境，实现四台服务器上多节点的完全分布式集群。在完成基本配置后，启动hadoop或者运行mapreduce时，经常会出现服务器由于内存不足而宕机卡住的情况出现，导致不得不重启服务器和hadoop集群，但重启之后依然会出现上述情况。于是考虑通过开启虚拟内存的方式增加内存资源进行尝试，但依然无法解决机器宕机的情况，无法稳定进行测试和运算。参考的教程如下：[服务器开启虚拟内存。](https://blog.csdn.net/qq_35500685/article/details/92787168?utm_medium=distribute.pc_aggpage_search_result.none-task-blog-2~aggregatepage~first_rank_ecpm_v1~rank_v31_ecpm-4-92787168.pc_agg_new_rank&utm_term=%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%A6%82%E4%BD%95%E6%89%93%E5%BC%80%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98&spm=1000.2123.3001.4430)
++ 在项目初期，打算通过Docker在服务器配置hadoop环境，实现四台服务器上多节点的完全分布式集群。在完成基本配置后，启动hadoop或者运行mapreduce时，经常会出现服务器由于内存不足而宕机卡住的情况出现，导致不得不重启服务器和hadoop集群，但重启之后依然会出现上述情况。于是考虑通过开启虚拟内存的方式增加内存资源进行尝试，但依然无法解决机器宕机的情况，无法稳定进行测试和运算。参考的教程如下：[服务器开启虚拟内存](https://blog.csdn.net/qq_35500685/article/details/92787168?utm_medium=distribute.pc_aggpage_search_result.none-task-blog-2~aggregatepage~first_rank_ecpm_v1~rank_v31_ecpm-4-92787168.pc_agg_new_rank&utm_term=%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%A6%82%E4%BD%95%E6%89%93%E5%BC%80%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98&spm=1000.2123.3001.4430)
 
 + 以下是在服务器上只搭建了一个DataNode的情况，分别通过`hdfs dfsadmin -report`命令查看hadoop当前hadoop的运行状况，以及`free -m`命令查看服务器的资源占用情况，可以发现只启动了一个节点的情况下，服务器的内存资源就已经消耗殆尽，依靠虚拟内存才勉强维持运行，且使用的虚拟内存容量远大于剩余的物理内存容量。
 
-  ![服务器hadoop情况](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\服务器hadoop情况.png)
+  ![服务器hadoop情况](readme-pic\服务器hadoop情况.png)
 
-  ![服务器内存占用情况](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\服务器内存占用情况.png)
+  ![服务器内存占用情况](readme-pic\服务器内存占用情况.png)
 
 #### 实际搭建
 
@@ -201,8 +221,57 @@ SecondaryNameNode工作过程：
 
 搭建方法参考老师提供的资料以及一些[网络资源。](http://dblab.xmu.edu.cn/blog/2775-2/#more-2775)
 
++ 在后期的执行测试阶段，发现会出现无法预测的错误产生，如下图所示
+
+  ❌❌
+
+  经过在网络上多方查询，没有能够彻底解决问题，因此考虑到可能是虚拟机的性能问题。所以，我们尝试将Slave2、Slave3防治到性能更好的台式机上运行，继续进行测试。
+
+  在网络配置完成后，继续执行同样的MapReduce程序，可以发现之前出现的错误均不会产生，可以正常的执行完成所有的过程
+
+  ❌❌
+
+  
+
 #### 程序编码
 
-使用
++ **数据处理**
+
+  ```python
+  for line in f:
+      tol += 1
+      str_list = line.split()
+      # 判断字段是否完全
+      if len(str_list) != 14:
+          delete_num += 1
+          print(str_list)
+          continue
+      # 判断时间是否有效
+      if int(str_list[11]) <= 0:
+          delete_num += 1
+          print(str_list)
+          continue
+      newf.write(line)
+  ```
+
+  在给出的数据中，有些数据存在错误，所以采用了一个简单的python脚本程序来过滤掉其中的一些错误数据：比如去掉其中字段不全的数据；去除通话时间小于等于零的数据等等。通过这些处理之后，可以有效防止执行mapreduce程序过程中的错误的产生
+
++ **MapReduce编码**
+
++ 
+
+  MapReduce总的有两部分的任务组成：Map和Reduce。Map任务是读取并处理一个数据块以生成键值对作为中间输出；Reduce任务的输入是是Mapper任务的输出，Reduce将这些中间数据元组聚合物成一组较小的元组或键值对，即最终的输出。
+
+  下面是MapReduce的一个任务示例：计算文章中的单词出现个数
+
+  ![MapReduce-Way-MapReduce-Tutorial-Edureka](https://d1jnx9ba8s6j9r.cloudfront.net/blog/wp-content/uploads/2016/11/MapReduce-Way-MapReduce-Tutorial-Edureka.png)
+
+  + 计算任务一
+
+  + 计算任务二
+
+    
+
+  + 计算任务三
 
 #### 测试优化
