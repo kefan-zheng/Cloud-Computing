@@ -2,7 +2,7 @@
 
 ## 项目成员
 
-**1950072 郑柯凡 1953981 吴昊天**
+**1950072 郑柯凡  1953981 吴昊天**
 
 ## 目录
 
@@ -197,13 +197,13 @@ SecondaryNameNode工作过程：
 
 + 在后期的执行测试阶段，发现会出现无法预测的错误产生，如下图所示
 
-  ![坏块报错](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\error-pic\坏块报错.png)
+  ![坏块报错](readme-pic\error-pic\坏块报错.png)
 
   经过在网络上多方查询，没有能够彻底解决问题，因此考虑到可能是虚拟机的性能问题。所以，我们尝试将Slave2、Slave3放置到性能更好的台式机上运行，继续进行测试。
 
   在网络配置完成后，继续执行同样的MapReduce程序，可以发现之前出现的错误均不会产生，可以正常的执行完成所有的过程
 
-  ![块128副本3mr1](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\block128-dup3\块128副本3mr1.png)
+  ![块128副本3mr1](readme-pic\block128-dup3\块128副本3mr1.png)
 
   
 
@@ -265,9 +265,9 @@ SecondaryNameNode工作过程：
     ```
 
     <img src="readme-pic/pie-borderRadius1.png" alt="pie-borderRadius1.png" style="zoom:50%;" />
-    
+
     <img src="readme-pic/pie-borderRadius2.png" alt="pie-borderRadius2.png" style="zoom:50%;" />
-    
+
     <img src="readme-pic/pie-borderRadius3.png" alt="pie-borderRadius3.png" style="zoom: 50%;" />
 
   + 计算任务三
@@ -275,6 +275,10 @@ SecondaryNameNode工作过程：
     任务三要求计算每个用户在各时间段的通话时长所占比例。采用的算法是初始化一个通话时长数组，并维护一个剩余通话时间（初始化为通话时间）以及剩余边界时间（初始化为通话开始时间到最近的下一个时间段边界时间），之后不断进行循环判断剩余通话时间和剩余边界时间的大小，若剩余通话时间小于等于剩余边界时间，则说明通话在该阶段结束，在数组中该阶段元素上加上剩余通话时长并退出循环；若剩余通话时间大于剩余边界时间，则通话在该阶段未结束，为数组该阶段元素加上剩余边界时长，并更新剩余通话时间和剩余边界时间，直至前一种情况出现。
 
     因为之前已经对原始数据进行了预处理，不存在通话时长为0的记录，通话时长和通话开始时间都是有效的，因此结果有效。
+
++ **MapReduce本地调试**
+
+  MapReduce程序如果将其放在hadoop服务器上进行调试，过程会非常的繁琐，并且如果在运行的过程中发生错误的话，也不能及时便捷的更改程序，因此我们在程序的调试过程中，配置了MapReduce的本地运行环境，主要是通过在MapReduce项目中添加的相关的Maven依赖，并且设置相关内容，然后就可以本地调试和运行相关的代码
 
 
 #### 4.4 性能测试优化
