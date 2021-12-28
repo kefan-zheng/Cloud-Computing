@@ -319,7 +319,7 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 | 任务二 | 120847 ms                        | 210904 ms                        | 128120 ms                       |
 | 任务三 | 163065 ms                        | 371679 ms                        | 277492 ms                       |
 
-**block-size(128)&&replications(1)**
+- **block-size(128)&&replications(1)**
 
 ![块128副本1mr1](readme-pic\block128-dup1\块128副本1mr1.png)
 
@@ -327,7 +327,7 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 
 ![块128副本1mr3](readme-pic\block128-dup1\块128副本1mr3.png)
 
-**block-size(64)&&replications(3)**
+- **block-size(64)&&replications(3)**
 
 ![块64副本3mr1](readme-pic\block64-dup3\块64副本3mr1.png)
 
