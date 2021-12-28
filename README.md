@@ -24,7 +24,9 @@
 
 + ###  [3 计算任务分配机制](#3-计算任务分配机制)
 
-  + #### [3.1 MapReduce](#31-MapReduce)
+  + #### [3.1 MapReduce原理](#31-MapReduce原理)
+
+  + #### [3.2 任务示例](#32-任务示例)
 
 + ### [4 实现过程](#4-实现过程)
 
@@ -34,7 +36,7 @@
 
   + #### [4.3 程序编码调试](#43-程序编码调试)
 
-  + #### [4.4 性能测试优化](#44-性能测试优化)
+  + #### [4.4 性能优化分析](#44-性能优化分析)
 
 
 ## 1. 系统架构
@@ -43,6 +45,8 @@
 
 + 4台CentOS Linux release 7.9.2009 (Core)虚拟机，主机名分别为Master、Slave1、Slave2和Slave3。
 + Master和Slave1部署在Windows 11操作系统上，Slave2和Slave3部署在MacOS操作系统上，组成了一个分布式的云计算系统。
+
+![系统组成](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\系统组成.png)
 
 |       Master       |     Slave1     |     Slave2     |     Slave3     |
 | :----------------: | :------------: | :------------: | :------------: |
@@ -100,11 +104,11 @@ HDFS是一个分布式的文件存储系统，它起源于Apache Nutch项目
 
 #### 2.2 文件分块方法
 
-hdfs将所有的文件全部抽象成为block块来进行存储，不管文件大小，全部一视同仁都是以block块的统一大小和形式进行存储，方便我们的分布式文件系统对文件的管理
+hdfs将所有的文件全部抽象成为block块来进行存储，不管文件大小，全部一视同仁都是以block块的统一大小和形式进行存储，方便我们的分布式文件系统对文件的管理。
 
-所有的文件都是以block块的方式存放在HDFS文件系统当中，在Hadoop1当中，文件的block块默认大小是64M，Hadoop2当中，文件的block块大小默认是128M，block块的大小可以通过hdfs-site.xml当中的配置文件进行指定
+所有的文件都是以block块的方式存放在HDFS文件系统当中，在Hadoop1当中，文件的block块默认大小是64M，Hadoop2当中，文件的block块大小默认是128M，block块的大小可以通过hdfs-site.xml当中的配置文件进行指定。
 
-在项目中使用的配置是分块大小是128M，这个大小是基于最佳传输损耗理论而来的，**最佳传输损耗理论**：在一次传输中，寻址时间占用总传输时间的1%时，本次传输的损耗最小，为最佳性价比传输。目前硬件的发展条件，普通磁盘写的速率大概为100M/S, 寻址时间一般为10ms。虽然现在的固态硬盘的读写速度远大于这个值，但受网络和虚拟机限制，没有修改默认的分块大小
+在项目中使用的配置是分块大小是128M，这个大小是基于最佳传输损耗理论而来的，**最佳传输损耗理论**：在一次传输中，寻址时间占用总传输时间的1%时，本次传输的损耗最小，为最佳性价比传输。目前硬件的发展条件，普通磁盘写的速率大概为100M/S, 寻址时间一般为10ms。虽然现在的固态硬盘的读写速度远大于这个值，但受网络和虚拟机限制，没有修改默认的分块大小。
 
 **文件分块截图**：处理后的data文件大小为149M，而设置的block size为128，因此文件会进行分块。
 
@@ -114,11 +118,11 @@ hdfs将所有的文件全部抽象成为block块来进行存储，不管文件�
 
 - 集群中的名称节点（NameNode）会把文件系统的变化以追加保存到日志文件edits中。
 
-- 当名称节点（NameNode）启动时，会从镜像文件 fsimage 中读取HDFS的状态，并且把edits文件中记录的操作应用到fsimage，也就是合并到fsimage中去。合并后更新fsimage的HDFS状态，创建一个新的edits文件来记录文件系统的变化
+- 当名称节点（NameNode）启动时，会从镜像文件 fsimage 中读取HDFS的状态，并且把edits文件中记录的操作应用到fsimage，也就是合并到fsimage中去。合并后更新fsimage的HDFS状态，创建一个新的edits文件来记录文件系统的变化。
 
-- Secondary NameNode定期合并fsimage和edits日志，把edits日志文件大小控制在一个限度下
+- Secondary NameNode定期合并fsimage和edits日志，把edits日志文件大小控制在一个限度下。
 
-- fs.checkpoint.period 指定两次checkpoint的最大时间间隔，默认3600秒
+- fs.checkpoint.period 指定两次checkpoint的最大时间间隔，默认3600秒。
 
 - #### 文件备份测试：hdfs设置的副本数为3，因此每一个block都会存储在3个节点上。
 
@@ -132,7 +136,7 @@ hdfs将所有的文件全部抽象成为block块来进行存储，不管文件�
 
 + 在edits logs满之前对内存和fsimage的数据做同步
 + （实际上只需要合并edits logs和fsimage上的数据即可，然后edits logs上的数据即可清除）
-+ 而当edits logs满之后，文件的上传不能中断，所以将会往一个新的文件edits.new上写数据，
++ 而当edits logs满之后，文件的上传不能中断，所以将会往一个新的文件edits.new上写数据
 + 而老的edits logs的合并操作将由secondNameNode来完成，即所谓的checkpoint操作。
 
 SecondaryNameNode工作过程：
@@ -159,7 +163,7 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 
 ## 3. 计算任务分配机制
 
-#### 3.1 MapReduce
+#### 3.1 MapReduce原理
 
 1. JobTracker接收到Job对象对其submitJob()方法的调用后，就会把这个调用放入一个内部队列中，交由作业调度器(Job Scheduler)进行调度,并对其进行初始化。
 2. **初始化工作**：创建一个表示正在运行作业的对象(它封装任务和记录信息，以便跟踪任务的状态和进程)
@@ -180,6 +184,14 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
    + 同时JobClient通过每秒查询JobTracker来获得最新状态，并且输出到控制台上
 7. **作业完成**：当JobTracker收到作业最后一个任务已完成的通知后，便把作业的状态设置为"成功"
 
+#### 3.2 任务示例
+
+MapReduce总的有两部分的任务组成：Map和Reduce。Map任务是读取并处理一个数据块以生成键值对作为中间输出；Reduce任务的输入是是Mapper任务的输出，Reduce将这些中间数据元组聚合物成一组较小的元组或键值对，即最终的输出。
+
+下面是MapReduce的一个任务示例：计算文章中的单词出现个数
+
+![MapReduce-Way-MapReduce-Tutorial-Edureka](https://d1jnx9ba8s6j9r.cloudfront.net/blog/wp-content/uploads/2016/11/MapReduce-Way-MapReduce-Tutorial-Edureka.png)
+
 ## 4. 实现过程
 
 #### 4.1 搭建尝试
@@ -194,7 +206,7 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 
 #### 4.2 实际环境搭建
 
-- 由于上述性能原因，我们放弃了在服务器上搭建hadoop集群的想法，选择在各自的笔记本电脑虚拟机软件上实现分布式的系统。使用的虚拟软件有VMware Fusion以及VMware Workstation 15 Pro。
+- 由于上述性能原因，我们放弃了在服务器上搭建hadoop集群的想法，选择通过配置相应的网络环境，在各自的笔记本电脑虚拟机软件上实现分布式的系统。使用的虚拟软件有VMware Fusion以及VMware Workstation 15 Pro。
 
 + 总体系统由4台CentOS Linux release 7.9.2009 (Core)虚拟机组成，主机名分别为Master、Slave1、Slave2和Slave3。Master和Slave1部署在Windows 11操作系统上，Slave2和Slave3部署在MacOS操作系统上。
 
@@ -204,7 +216,7 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 |      NameNode      |     —————      |     —————      |     —————      |
 |       —————        |    DataNode    |    DataNode    |    DataNode    |
 
-搭建方法参考老师提供的资料以及一些[网络资源。](http://dblab.xmu.edu.cn/blog/2775-2/#more-2775)
+搭建方法参考老师提供的资料以及一些[网络资源](http://dblab.xmu.edu.cn/blog/2775-2/#more-2775)。文档中就不再赘述了。
 
 + 在后期的执行测试阶段，发现会出现无法预测的错误产生，如下图所示
 
@@ -212,7 +224,7 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 
   经过在网络上多方查询，没有能够彻底解决问题，因此考虑到可能是虚拟机的性能问题。所以，我们尝试将Slave2、Slave3放置到性能更好的台式机上运行，继续进行测试。
 
-  在网络配置完成后，继续执行同样的MapReduce程序，可以发现之前出现的错误均不会产生，可以正常的执行完成所有的过程
+  在网络配置完成后，继续执行同样的MapReduce程序，可以发现之前出现的错误均不会产生，可以正常的执行完成所有的过程，因此证明此前的错误确实是由于机器性能不足所导致的，也说明了hadoop集群的搭建需要大量的资源。
 
   ![块128副本3mr1](readme-pic\block128-dup3\块128副本3mr1.png)
 
@@ -242,12 +254,6 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
 
 + **MapReduce编码**
 
-  MapReduce总的有两部分的任务组成：Map和Reduce。Map任务是读取并处理一个数据块以生成键值对作为中间输出；Reduce任务的输入是是Mapper任务的输出，Reduce将这些中间数据元组聚合物成一组较小的元组或键值对，即最终的输出。
-
-  下面是MapReduce的一个任务示例：计算文章中的单词出现个数
-
-  ![MapReduce-Way-MapReduce-Tutorial-Edureka](https://d1jnx9ba8s6j9r.cloudfront.net/blog/wp-content/uploads/2016/11/MapReduce-Way-MapReduce-Tutorial-Edureka.png)
-
   + 计算任务一
 
     第一个任务要求统计用户的每日平均通话次数，并以键值对<主叫号码，平均每日通话次数>的格式输出保存。具体的计算思路就是在Map过程中遍历数据，对每次通话的主叫号码记录其通话次数为1。在Reduce阶段，对每个主叫号码的通话次数累加，得出其总通话次数，并除以总天数得到每日平均通话次数。虽然题目中要求的键值对以主叫号码作为key，但接电话也算通话，因此本题中对一通电话的主叫和被叫都进行了记录。
@@ -255,29 +261,29 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
   + 计算任务二
 
     ```java
-    // 使用通话类型加运营商类别作为key 使用硬编码值1作为value
+  // 使用通话类型加运营商类别作为key 使用硬编码值1作为value
     context.write(new Text(call_type + calling_optr), new IntWritable(1));
-    context.write(new Text(call_type + calling_optr), new IntWritable(1));
+  context.write(new Text(call_type + calling_optr), new IntWritable(1));
     ```
 
     因为有打电话和接电话的区别，所以在Map这一步的时候，将call_type + calling_optr和call_type + calling_optr同时作为key，所以一共有9种key的类别，计算的结果如下：
-
+  
     ```c++
     11	2485801		//市话+电信
     12	953128		//市话+移动
-    13	136945		//市话+联通
+  13	136945		//市话+联通
     21	217084		//长途+电信
-    22	102751		//长途+移动
+  22	102751		//长途+移动
     23	20677		//长途+联通
     31	44203		//漫游+电信
     32	26168		//漫游+移动
     33	5219		//漫游+联通
     ```
-
+  
     <img src="readme-pic/pie-borderRadius1.png" alt="pie-borderRadius1.png" style="zoom:50%;" />
-
+  
     <img src="readme-pic/pie-borderRadius2.png" alt="pie-borderRadius2.png" style="zoom:50%;" />
-
+  
     <img src="readme-pic/pie-borderRadius3.png" alt="pie-borderRadius3.png" style="zoom: 50%;" />
 
   + 计算任务三
@@ -293,11 +299,15 @@ Slave1将自己本地的test文件上传到hdfs中，Slave3可以通过hdfs命�
   ![本地调试](readme-pic\本地调试.png)
 
 
-#### 4.4 性能测试优化
+#### 4.4 性能优化分析
 
-- **默认配置测试**
+- **默认配置计算**
 
-  在Hadoop默认配置下（分块大小128M，副本数为3）运行测试3个计算用例，Hadoop输出如下图所示。可以看见3个用例都正常计算完成，其中任务一总共耗时145秒左右，任务二耗时120秒左右，任务三耗时163秒左右。
+  在Hadoop默认配置下（分块大小128M，副本数为3）运行测试3个计算用例，Hadoop输出如下图所示。可以看见3个用例都正常计算完成，其中任务一总共耗时145秒左右，任务二耗时120秒左右，任务三耗时163秒左右。同时，我们也注意到，当Master在一台电脑上开始执行MapReduce程序之后，另外安装了Slave2和Slave3节点的电脑的上下行发生了明显的变化，从原本的几KB/s变成了几M/s，且在同一时间总是上下行的其中一个参数比较偏高。证明了hadoop集群正在工作，可能在执行map任务或reduce任务。
+
+  ![上下行1](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\上下行1.jpg)
+
+  ![上下行2](C:\TongJi\junior1\云计算\Cloud-Computing-repo\Cloud-Computing\readme-pic\上下行2.jpg)
 
   <img src="readme-pic\block128-dup3\块128副本3mr1.png" alt="块128副本3mr1" style="zoom: 80%;" />
 
